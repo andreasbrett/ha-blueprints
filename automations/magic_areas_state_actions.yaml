@@ -1,0 +1,150 @@
+blueprint:
+  name: "Magic Areas - State Actions (2025-02-28)"
+  description:
+    Trigger actions based on the state of a [Magic Area](https://github.com/jseidl/hass-magic_areas)
+  domain: automation
+  author: Andreas Brett
+  source_url: https://github.com/andreasbrett/ha-blueprints/blob/master/automations/magic_areas_state_actions.yaml
+  homeassistant:
+    min_version: 2024.6.0
+
+  input:
+    section_inputs:
+      name: Magic Area
+      icon: mdi:star
+      input:
+        entity_id:
+          name: State Entity
+          description: select Magic Area state entity
+          selector:
+            entity:
+              filter:
+                integration: magic_areas
+                domain: binary_sensor
+                device_class: occupancy
+
+    section_actions_presence:
+      name: Presence
+      icon: mdi:motion-sensor
+      input:
+        action_occupied:
+          name: Occupied State
+          description: actions to perform when area enters occupied state
+          default:
+          selector:
+            action: {}
+
+        action_clear:
+          name: Clear State
+          description: actions to perform when area enters clear state
+          default:
+          selector:
+            action: {}
+
+    section_actions_accent_entity:
+      name: Accent Entity
+      icon: mdi:lightbulb-auto
+      collapsed: true
+      input:
+        action_accented:
+          name: Accented State
+          description: actions to perform when area enters accented state
+          default:
+          selector:
+            action: {}
+
+    section_actions_area_light_sensor:
+      name: Area Light Sensor
+      icon: mdi:brightness-6
+      collapsed: true
+      input:
+        action_bright:
+          name: Bright State
+          description: actions to perform when area enters bright state
+          default:
+          selector:
+            action: {}
+
+        action_dark:
+          name: Dark State
+          description: actions to perform when area enters dark state
+          default:
+          selector:
+            action: {}
+
+    section_actions_extended_time:
+      name: Extended Time
+      icon: mdi:clock
+      collapsed: true
+      input:
+        action_extended:
+          name: Extended State
+          description: actions to perform when area enters extended state
+          default:
+          selector:
+            action: {}
+
+    section_actions_sleep_entity:
+      name: Sleep Entity
+      icon: mdi:sleep
+      collapsed: true
+      input:
+        action_sleep_enter:
+          name: Sleep State (enter)
+          description: actions to perform when area enters sleep state
+          default:
+          selector:
+            action: {}
+
+        action_sleep_leave:
+          name: Sleep State (leave)
+          description: actions to perform when area leaves sleep state
+          default:
+          selector:
+            action: {}
+
+
+triggers:
+
+  - trigger: state
+    entity_id: !input entity_id
+    variables:
+      secondary_states: "{{ trigger.to_state.attributes.states | default('unknown', true) }}"
+      secondary_states_prev: "{{ trigger.from_state.attributes.states | default('unknown', true) }}"
+
+
+actions:
+
+  - choose:
+
+    - conditions: "{{ ('occupied' in secondary_states) and ('occupied' not in secondary_states_prev) }}"
+      alias: Occupied
+      sequence: !input action_occupied
+
+    - conditions: "{{ ('clear' in secondary_states) and ('clear' not in secondary_states_prev) }}"
+      alias: Clear
+      sequence: !input action_clear
+
+    - conditions: "{{ ('accented' in secondary_states) and ('accented' not in secondary_states_prev) }}"
+      alias: Accented
+      sequence: !input action_accented
+
+    - conditions: "{{ ('bright' in secondary_states) and ('bright' not in secondary_states_prev) }}"
+      alias: Bright
+      sequence: !input action_bright
+
+    - conditions: "{{ ('dark' in secondary_states) and ('dark' not in secondary_states_prev) }}"
+      alias: Dark
+      sequence: !input action_dark
+
+    - conditions: "{{ ('extended' in secondary_states) and ('extended' not in secondary_states_prev) }}"
+      alias: Extended
+      sequence: !input action_extended
+
+    - conditions: "{{ ('sleep' in secondary_states) and ('sleep' not in secondary_states_prev) }}"
+      alias: Sleep (enter)
+      sequence: !input action_sleep_enter
+
+    - conditions: "{{ ('sleep' not in secondary_states) and ('sleep' in secondary_states_prev) }}"
+      alias: Sleep (leave)
+      sequence: !input action_sleep_leave
